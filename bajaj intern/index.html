@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SRM Graph Explorer - Compact Hierarchy Analyzer">
+    <title>SRM Graph Explorer | Compact</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: 'Outfit', sans-serif; min-height: 100vh; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .gradient-text { background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body x-data="{ 
+    input: '[\'A->B\', \'A->C\', \'B->D\']', 
+    baseUrl: 'http://localhost:5000',
+    resp: null, 
+    loading: false,
+    async submit() {
+        this.loading = true;
+        try {
+            const cleanInput = this.input.replace(/'/g, '\"');
+            const data = JSON.parse(cleanInput);
+            const r = await fetch(this.baseUrl.replace(/\/$/, '') + '/bfhl', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data })
+            });
+            this.resp = await r.json();
+        } catch(e) { alert('Check input format or API URL. Error: ' + e.message); }
+        this.loading = false;
+    }
+}">
+    <div class="max-w-6xl mx-auto p-4 md:p-12">
+        <header class="text-center mb-16">
+            <div class="inline-block p-3 glass rounded-2xl mb-4">
+                <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+            </div>
+            <h1 class="text-5xl font-bold gradient-text">SRM Graph Explorer</h1>
+            <p class="text-slate-400 mt-3 font-light tracking-wide uppercase text-xs">Compact Full Stack Implementation</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Controls -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="glass p-6 rounded-3xl">
+                    <label class="block text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-4">API Configuration</label>
+                    <div class="flex items-center bg-slate-900/50 border border-white/5 rounded-xl px-4 py-2">
+                        <svg class="w-4 h-4 text-slate-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                        <input x-model="baseUrl" class="w-full bg-transparent border-none focus:ring-0 text-sm font-mono text-indigo-300" placeholder="Base URL">
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-3xl">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Graph Edge List</label>
+                    <textarea x-model="input" class="w-full h-48 bg-slate-900/50 border border-white/10 rounded-2xl p-4 text-sm font-mono focus:ring-2 focus:ring-indigo-500/50 outline-none"></textarea>
+                    <button @click="submit" :disabled="loading" class="w-full mt-6 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold flex justify-center items-center gap-3 transition-all transform active:scale-95 shadow-xl shadow-indigo-900/20">
+                        <template x-if="loading"><svg class="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></template>
+                        <span x-text="loading ? 'Processing...' : 'Process Hierarchy'"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="lg:col-span-7">
+                <template x-if="!resp && !loading">
+                    <div class="glass h-[480px] flex flex-col items-center justify-center text-slate-600 rounded-3xl border-dashed">
+                        <svg class="w-16 h-16 mb-4 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="font-light">Ready for input</p>
+                    </div>
+                </template>
+
+                <template x-if="resp">
+                    <div class="space-y-6">
+                        <!-- Stats -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="glass p-5 rounded-2xl text-center border-emerald-500/10"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Trees</p><p x-text="resp.summary.total_trees" class="text-3xl font-bold text-emerald-400"></p></div>
+                            <div class="glass p-5 rounded-2xl text-center border-amber-500/10"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Cycles</p><p x-text="resp.summary.total_cycles" class="text-3xl font-bold text-amber-400"></p></div>
+                            <div class="glass p-5 rounded-2xl text-center border-indigo-500/10"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Largest</p><p x-text="resp.summary.largest_tree_root || 'N/A'" class="text-3xl font-bold text-indigo-400"></p></div>
+                        </div>
+
+                        <!-- Hierarchies -->
+                        <div class="glass p-8 rounded-3xl">
+                            <h3 class="text-[10px] font-bold text-slate-400 mb-6 uppercase tracking-[0.2em]">Structural Analysis</h3>
+                            <div class="space-y-4">
+                                <template x-for="h in resp.hierarchies">
+                                    <div class="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span x-text="h.has_cycle ? 'Cyclic Component' : 'Tree (Depth: '+h.depth+')'" :class="h.has_cycle ? 'bg-amber-500/10 text-amber-300' : 'bg-indigo-500/10 text-indigo-300'" class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider"></span>
+                                            <span x-text="'Root: ' + h.root" class="text-[10px] font-mono text-slate-500"></span>
+                                        </div>
+                                        <div class="pl-4 border-l-2 border-white/5 overflow-x-auto">
+                                            <template x-if="h.has_cycle"><p class="text-amber-500/50 italic text-sm">Self-contained loop starting at node <span x-text="h.root"></span></p></template>
+                                            <template x-if="!h.has_cycle"><pre x-text="JSON.stringify(h.tree, null, 2)" class="text-sm font-mono text-indigo-200/80"></pre></template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Metadata -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="glass p-5 rounded-2xl">
+                                <h4 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Invalid</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="it in resp.invalid_entries"><span x-text="it" class="px-2 py-1 bg-red-500/5 text-red-400/60 rounded text-[10px] font-mono border border-red-500/10"></span></template>
+                                    <template x-if="resp.invalid_entries.length === 0"><span class="text-[10px] text-slate-600 italic">No invalid entries</span></template>
+                                </div>
+                            </div>
+                            <div class="glass p-5 rounded-2xl">
+                                <h4 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Duplicates</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="it in resp.duplicate_edges"><span x-text="it" class="px-2 py-1 bg-white/5 text-slate-500 rounded text-[10px] font-mono border border-white/5"></span></template>
+                                    <template x-if="resp.duplicate_edges.length === 0"><span class="text-[10px] text-slate-600 italic">No duplicates</span></template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Info -->
+                        <div class="text-center pt-8 opacity-20 text-[10px] font-bold uppercase tracking-[0.3em] space-y-1">
+                            <p x-text="resp.user_id"></p>
+                            <p x-text="resp.college_roll_number"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
